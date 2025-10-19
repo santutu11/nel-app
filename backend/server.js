@@ -25,6 +25,19 @@ app.use(express.json({ limit: '50mb' }));
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
+app.get('/', (req, res) => {
+  res.json({
+    message: 'NEL Backend API - Use /api/health to check status',
+    endpoints: [
+      '/api/health',
+      '/api/chat',
+      '/api/analyze-image',
+      '/api/validate-dimensions',
+      '/api/suggest-materials',
+      '/api/generate-smart-dxf'
+    ]
+  });
+});
 
 // Sistema de prompts para NEL
 const SYSTEM_PROMPT = `Eres NEL, el asistente de producción inteligente de MOBINEL. Tu trabajo es ayudar a los clientes a crear órdenes de fabricación con corte CNC, pintura y acabados.
