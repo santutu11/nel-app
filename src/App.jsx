@@ -123,37 +123,51 @@ export default function NELApp() {
 
   // Llamar al backend para obtener respuesta de Claude
   const getClaudeResponse = async (userMessage) => {
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: messages.map(m => ({ sender: m.sender, text: m.text })).concat([
-            { sender: 'user', text: userMessage }
-          ]),
-          orderData: orderData,
-          language: language
-        })
-      });
+  try {
+    // Timeout de 60 segundos
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-      const data = await response.json();
-      
-      if (data.success) {
-        return data.message;
-      } else {
-        return language === 'es' 
-          ? 'Lo siento, hubo un error. ¿Puedes repetir tu respuesta?'
-          : 'Sorry, there was an error. Can you repeat your answer?';
-      }
-    } catch (error) {
-      console.error('Error calling Claude API:', error);
-      return language === 'es'
-        ? 'Error de conexión. Por favor verifica que el servidor esté corriendo.'
-        : 'Connection error. Please verify the server is running.';
+    const response = await fetch(`${BACKEND_URL}/api/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages: messages.map(m => ({ sender: m.sender, text: m.text })).concat([
+          { sender: 'user', text: userMessage }
+        ]),
+        orderData: orderData,
+        language: language
+      }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    const data = await response.json();
+    
+    if (data.success) {
+      return data.message;
+    } else {
+      return language === 'es' 
+        ? 'Lo siento, hubo un error. ¿Puedes repetir tu respuesta?'
+        : 'Sorry, there was an error. Can you repeat your answer?';
     }
-  };
+  } catch (error) {
+    console.error('Error calling Claude API:', error);
+    
+    if (error.name === 'AbortError') {
+      return language === 'es'
+        ? '⏱️ La respuesta está tardando más de lo normal (el servidor gratuito puede estar "despertando"). Por favor espera 30 segundos e intenta de nuevo.'
+        : '⏱️ Response is taking longer than normal (free server may be "waking up"). Please wait 30 seconds and try again.';
+    }
+    
+    return language === 'es'
+      ? 'Error de conexión. El servidor gratuito puede estar iniciando (tarda ~50 segundos la primera vez). Intenta de nuevo en un momento.'
+      : 'Connection error. Free server may be starting (~50 seconds first time). Try again in a moment.';
+  }
+};
 
   // Analizar imagen con Claude
   const analyzeImage = async (imageBase64) => {
