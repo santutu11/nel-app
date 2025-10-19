@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { List, Send, Package, Ruler, Layers, FileCode, Lock, LogOut, Download, Eye, Globe, Upload, Image as ImageIcon, Edit2, Check, X } from 'lucide-react';
 
 const BACKEND_URL = import.meta.env.PROD 
-  ? 'https://nel-backend.onrender.com' 
+  ? 'https://nel-backend-xgg6.onrender.com' 
   : 'http://localhost:3001';
 
 export default function NELApp() {
